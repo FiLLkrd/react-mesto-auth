@@ -1,15 +1,25 @@
+//Импортируем компоненты REACT
 import React, { useEffect, useState } from "react";
+import { Routes, Route, useNavigate } from "react-router-dom";
 
+//Импортируем созданые компоненты
 import Header from "./Header";
 import Footer from "./Footer";
 import Main from "./Main";
 import ImagePopup from "./ImagePopup";
 import PopupWithForm from "./PopupWithForm";
-import apiRequest from '../utils/api'
 import EditAvatarPopup from "./EditAvatarPopup";
 import EditProfilePopup from "./EditProfilePopup";
 import CurrentUserContext from "../contexts/CurrentUserContext";
 import AddPlacePopup from "./AddPlacePopup";
+import Register from "./Register";
+import Login from "./Login";
+import InfoTooltip from "./InfoTooltip";
+import ProtectedRoute from "./ProtectedRoute";
+
+//Импортируем компоненты API
+import {checkAuthData, signIn, signUp} from "../utils/authorization";
+import apiRequest from '../utils/api';
 
 function App() {
   const [editAvatarPopupOpen, setEditAvatarPopupOpen] = useState(false);
@@ -20,6 +30,11 @@ function App() {
   const [currentUser, setCurrentUser] = useState({});
   const [cards, setCards] = useState([]);
   const [isRenderLoading, setIsRenderLoading] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userEmail, setUserEmail] = useState('');
+  const [infoTooltipOpen, setInfoTooltipOpen] = useState(false);
+  const [status, setStatus] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     Promise.all([
@@ -30,7 +45,8 @@ function App() {
         setCards(cardData);
     }).catch(err => console.log(err));
 }, []);
-  
+
+
 
   function handleAvatarPopupClick() {
     setEditAvatarPopupOpen(true);
@@ -49,6 +65,7 @@ function App() {
     setEditProfilePopupOpen(false);
     setAddCardPopupOpen(false);
     setImagePopupOpen(false);
+    setInfoTooltipOpen(false)
   }
 
   function handleCardClick(card) {
@@ -124,10 +141,63 @@ function App() {
       });
   }
 
+  const handleRegister = async (data) => {
+    try {
+        await signUp(data);
+        setInfoTooltipOpen(true);
+        setStatus('accept');
+        navigate("/sign-in")
+    } catch(err) {
+        console.log(err)
+        setInfoTooltipOpen(true);
+        setStatus('failed');
+    }
+}
+
+const handleSignIn = async (data) => {
+  try {
+      const {token} = await signIn(data);
+      localStorage.setItem('jwt', token);
+      setIsLoggedIn(true);
+      setUserEmail(data.email);
+      navigate("/")
+  } catch(err) {
+      console.log(err);
+      setInfoTooltipOpen(true);
+      setStatus('failed');
+  }
+}
+
+function handleSignExit(){
+  localStorage.removeItem('jwt');
+  setIsLoggedIn(false);
+  setUserEmail('');
+  navigate('/sign-in')
+} 
+
+useEffect(() =>{
+  const jwt = localStorage.getItem('jwt');
+
+  if(jwt) {
+      checkAuthData(jwt)
+      .then((res) => {
+          setIsLoggedIn(true);
+          setUserEmail(res.data.email);
+          navigate('/')
+      })
+      .catch((err) => console.log(err))
+  }
+}, [navigate])
+  
+
+
   return (
-    <div className="page">
       <CurrentUserContext.Provider value={currentUser}>
-        <Header />
+        <div className="page">
+        <Header userEmail={userEmail} onSignExit={handleSignExit}/>
+        <Routes>
+          <Route path="/" element={
+            <ProtectedRoute isLoggedIn={isLoggedIn}>
         <Main
           cards={cards}
           onProfilePopup={handleProfilePopupClick}
@@ -137,6 +207,11 @@ function App() {
           onCardLike={handleCardLike}
           onCardDelete={handleCardDelete}
         />
+        </ProtectedRoute>
+        }/>
+        <Route path="/sign-up" element={<Register onSubmit={handleRegister}/>}/>
+        <Route path="/sign-in" element={<Login onSubmit={handleSignIn}/>}/>
+        </Routes>
         <Footer />
         <EditProfilePopup
           opened={editProfilePopupOpen}
@@ -166,8 +241,14 @@ function App() {
           closed={closePopup}
           openEditAvatar={handleEditAvatar}
         />
+        <InfoTooltip
+          name="status"
+          isOpen={infoTooltipOpen}
+          onClose={closePopup}
+          status={status}
+        />
+      </div>
       </CurrentUserContext.Provider>
-    </div>
   );
 }
 
