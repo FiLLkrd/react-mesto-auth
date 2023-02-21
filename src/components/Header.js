@@ -9,7 +9,7 @@ export default function Header(props) {
       <div>
       <img src={HeaderLogo} alt="Логотип" className="header__logo" />
       </div>
-      <div className="header__nav">
+      <div className="header__sign">
         <Routes>
           <Route path="sign-in" element={<Link to="/sign-up" className="header__link" >Регистрация</Link>}/>
           <Route path="sign-up" element={<Link to="/sign-in" className="header__link" >Войти</Link>}/>

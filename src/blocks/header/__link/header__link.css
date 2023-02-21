@@ -5,4 +5,9 @@
     line-height: 22px;
     color: #A9A9A9;
     text-decoration: none;
+    cursor: pointer;
+}
+
+.header__link{
+    opacity: 0.6;
 }

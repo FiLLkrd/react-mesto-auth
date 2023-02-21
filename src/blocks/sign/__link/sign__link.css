@@ -7,4 +7,9 @@
     text-align: center;
     color: #FFFFFF;
     text-decoration: none;
+    cursor: pointer;
+}
+
+.sign__link:hover{
+    opacity: 0.6;
 }

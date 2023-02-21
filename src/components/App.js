@@ -243,8 +243,8 @@ useEffect(() =>{
         />
         <InfoTooltip
           name="status"
-          isOpen={infoTooltipOpen}
-          onClose={closePopup}
+          opened={infoTooltipOpen}
+          closed={closePopup}
           status={status}
         />
       </div>
